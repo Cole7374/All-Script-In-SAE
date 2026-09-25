@@ -1,476 +1,306 @@
--- ================= JOHNBERT HUB - PERMANENT SAVED KEY SYSTEM =================
-local Players = game:GetService("Players")
-local LocalPlayer = Players.LocalPlayer
-local HttpService = game:GetService("HttpService")
-local TweenService = game:GetService("TweenService")
+-- ================= JOHNBERT HUB - FLUENT UI + BOUNDED DRAGGABLE TOGGLE ICON =================
 local CoreGui = game:GetService("CoreGui")
-
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 local ProtectedGui = (gethui and gethui()) or CoreGui
 
-if ProtectedGui:FindFirstChild("JohnbertCustomKeySystem") then 
-    ProtectedGui.JohnbertCustomKeySystem:Destroy() 
+if ProtectedGui:FindFirstChild("JohnbertFluentHub") then 
+    ProtectedGui.JohnbertFluentHub:Destroy() 
 end
 
+if ProtectedGui:FindFirstChild("JohnbertToggleIcon") then 
+    ProtectedGui.JohnbertToggleIcon:Destroy() 
+end
+
+-- Play startup sound
 pcall(function()
-    local KeySound = Instance.new("Sound")
-    KeySound.Name = "JohnBertKeySystemSound"
-    KeySound.SoundId = "rbxassetid://113377354243758"
-    KeySound.Volume = 0.6
-    KeySound.Parent = ProtectedGui
-    KeySound:Play()
+    local MainSound = Instance.new("Sound")
+    MainSound.Name = "JohnBertMainUISound"
+    MainSound.SoundId = "rbxassetid://135062039022934"
+    MainSound.Volume = 0.7
+    MainSound.Parent = ProtectedGui
+    MainSound:Play()
 end)
 
--- Sekreto ang Key diri (Hidden/Encoded)
-local EncryptedKeyBytes = {71, 87, 65, 80, 79, 83, 73, 67, 79, 76, 69}
-local function GetSecretKey()
-    local chars = {}
-    for _, byte in ipairs(EncryptedKeyBytes) do
-        table.insert(chars, string.char(byte))
+-- Create Bounded Draggable Toggle Icon (Square rounded, no sharp edges)
+local ToggleGui = Instance.new("ScreenGui")
+ToggleGui.Name = "JohnbertToggleIcon"
+ToggleGui.Parent = ProtectedGui
+ToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+local ToggleButton = Instance.new("ImageButton")
+ToggleButton.Name = "ToggleButton"
+ToggleButton.Parent = ToggleGui
+ToggleButton.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+ToggleButton.Position = UDim2.new(0.05, 0, 0.1, 0)
+ToggleButton.Size = UDim2.new(0, 50, 0, 50)
+ToggleButton.Image = "rbxassetid://95829563639545"
+ToggleButton.AutoButtonColor = true
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 12) -- Rounded square shape, walay hait
+UICorner.Parent = ToggleButton
+
+local UIStroke = Instance.new("UIStroke")
+UIStroke.Color = Color3.fromRGB(100, 100, 255)
+UIStroke.Thickness = 2
+UIStroke.Parent = ToggleButton
+
+-- Draggable Logic with Screen Boundary Restriction (Bawal maka-gawas sa screen)
+local dragging = false
+local dragInput, dragStart, startPos
+
+ToggleButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = ToggleButton.AbsolutePosition
+        
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
     end
-    return table.concat(chars)
-end
+end)
 
-local FileName = "JohnbertHub_PermanentKey_v2.json"
-
-local function TrimString(str)
-    if not str then return "" end
-    return (str:gsub("^%s*(.-)%s*$", "%1"))
-end
-
--- Susihon kung naay saved key (Permanent, walay expiration)
-local function CheckSavedKey()
-    local successCheck, result = pcall(function()
-        if not (readfile and writefile and isfile) then return false end
-        if isfile(FileName) then
-            local decoded = HttpService:JSONDecode(readfile(FileName))
-            if decoded and TrimString(decoded.Key) == GetSecretKey() then
-                return true 
-            end
-        end
-        return false
-    end)
-    return successCheck and result
-end
-
--- I-save ang key permanently
-local function SaveKeyData()
-    pcall(function()
-        if writefile then
-            local data = {
-                Key = GetSecretKey(),
-                Status = "Permanent"
-            }
-            writefile(FileName, HttpService:JSONEncode(data))
-        end
-    end)
-end
-
--- Forward declaration sa Main Rayfield UI Loader
-local LoadMainHub = nil
-
-LoadMainHub = function()
-    pcall(function()
-        local MainSound = Instance.new("Sound")
-        MainSound.Name = "JohnBertMainUISound"
-        MainSound.SoundId = "rbxassetid://135062039022934"
-        MainSound.Volume = 0.7
-        MainSound.Parent = ProtectedGui
-        MainSound:Play()
-    end)
-
-    local Success, Rayfield = pcall(function()
-        return loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
-    end)
-
-    if not Success or not Rayfield then
-        warn("Failed to load Rayfield UI.")
-        return
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        local newX = startPos.X + delta.X
+        local newY = startPos.Y + delta.Y
+        
+        -- Kuhaon ang size sa screen aron dili gyud ma-awas
+        local viewportSize = ToggleGui.AbsoluteSize
+        local maxX = viewportSize.X - ToggleButton.AbsoluteSize.X
+        local maxY = viewportSize.Y - ToggleButton.AbsoluteSize.Y
+        
+        -- I-clamp ang posisyon aron naa ra gyud sa sulod sa screen
+        newX = math.clamp(newX, 0, maxX)
+        newY = math.clamp(newY, 0, maxY)
+        
+        ToggleButton.Position = UDim2.new(0, newX, 0, newY)
     end
+end)
 
-    local Window = Rayfield:CreateWindow({
-       Name = "Johnbert Hub | Steal An Egg Ultimate",
-       LoadingTitle = "Johnbert Hub Loading...",
-       LoadingSubtitle = "by Johnbert",
-       ConfigurationSaving = { 
-           Enabled = true, 
-           FolderName = "JohnbertHub", 
-           FileName = "StealAnEggConfig" 
-       },
-       KeySystem = false
-    })
+local Success, Fluent = pcall(function()
+    return loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+end)
 
-    local CreatorTab = Window:CreateTab("Creator Log", 6023426915)
-    CreatorTab:CreateSection("Developer Information")
-    CreatorTab:CreateParagraph({Title = "Owner", Content = "Johnbert"})
-    CreatorTab:CreateParagraph({Title = "Status", Content = "Verified Developer & Hub Creator (Permanent Key Active)"})
-    CreatorTab:CreateParagraph({Title = "Tab Description", Content = "Displays developer details, community links, and real-time countdown timers for the next scheduled script updates."})
-
-    local CountdownParagraph = CreatorTab:CreateParagraph({Title = "Next Script Update Countdown", Content = "Loading timer..."})
-
-    task.spawn(function()
-        while true do
-            local now = os.time()
-            local targetHour = 22
-            local targetMin = 0
-            local dateTable = os.date("*t", now)
-            
-            local targetTable = {
-                year = dateTable.year,
-                month = dateTable.month,
-                day = dateTable.day,
-                hour = targetHour,
-                min = targetMin,
-                sec = 0
-            }
-            local targetTime = os.time(targetTable)
-            
-            if now > targetTime then
-                targetTable.day = targetTable.day + 1
-                targetTime = os.time(targetTable)
-            end
-            
-            local diff = targetTime - now
-            
-            if diff > 0 then
-                local hours = math.floor(diff / 3600)
-                local minutes = math.floor((diff % 3600) / 60)
-                local seconds = diff % 60
-                CountdownParagraph:Set({Title = "Next Script Update Countdown (Alas 10:00)", Content = string.format("%02d hours, %02d minutes, %02d seconds remaining", hours, minutes, seconds)})
-            else
-                CountdownParagraph:Set({Title = "Next Script Update Countdown", Content = "Update time reached (Alas 10:00)!"})
-            end
-            task.wait(1)
-        end
-    end)
-
-    CreatorTab:CreateButton({
-       Name = "Copy Discord Link",
-       Callback = function()
-          pcall(function() if setclipboard then setclipboard("https://discord.gg/8CZGc9mXj") end end)
-          Rayfield:Notify({Title = "Discord", Content = "Discord link copied to clipboard!", Duration = 3})
-       end,
-    })
-
-    local LennonTab = Window:CreateTab("Lennon Hub", 4483362458)
-    LennonTab:CreateSection("Lennon V3 Script & Info")
-    LennonTab:CreateParagraph({Title = "Description", Content = "Executes Lennon Hub V3 tailored for Steal An Egg."})
-    LennonTab:CreateButton({
-       Name = "Execute Lennon Hub V3",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonhubv3/refs/heads/main/stealanegg.lua"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Lennon Hub V3!", Duration = 3})
-       end,
-    })
-
-    local VoidTab = Window:CreateTab("VoidShell", 4483362458)
-    VoidTab:CreateSection("VoidShell Script & Info")
-    VoidTab:CreateParagraph({Title = "Description", Content = "Loads VoidShell Hub for resource collection and performance."})
-    VoidTab:CreateButton({
-       Name = "Execute VoidShell Hub",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/VoidShell-null/VoidShell-Hub/refs/heads/main/Scripts/StealAnEgg.luau"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed VoidShell Hub!", Duration = 3})
-       end,
-    })
-
-    local WwTab = Window:CreateTab("Ww Script", 4483362458)
-    WwTab:CreateSection("WW Script & Info")
-    WwTab:CreateParagraph({Title = "Description", Content = "Executes an obfuscated utility script for automated actions."})
-    WwTab:CreateButton({
-       Name = "Execute Ww Script",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/virtuososvisualedits-prog/Ww/refs/heads/main/final-obfuscated.lua"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Ww Script!", Duration = 3})
-       end,
-    })
-
-    local ShaderTab = Window:CreateTab("Shaders", 4483362458)
-    ShaderTab:CreateSection("Graphic Enhancements")
-    ShaderTab:CreateParagraph({Title = "Description", Content = "Applies custom visual filters and lighting improvements."})
-    ShaderTab:CreateButton({
-       Name = "Execute Simple Shader",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/robloxscripts2026/simple-shader/refs/heads/main/lua"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Simple Shader!", Duration = 3})
-       end,
-    })
-
-    local PastefyTab = Window:CreateTab("Pastefy", 4483362458)
-    PastefyTab:CreateSection("External Script")
-    PastefyTab:CreateParagraph({Title = "Description", Content = "Fetches and runs external raw scripts from Pastefy."})
-    PastefyTab:CreateButton({
-       Name = "Execute Pastefy Script",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://pastefy.app/YoZocJ8O/raw"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Pastefy Script!", Duration = 3})
-       end,
-    })
-
-    local ChilliTab = Window:CreateTab("Chilli Hub", 4483362458)
-    ChilliTab:CreateSection("Chilli Hub & Info")
-    ChilliTab:CreateParagraph({Title = "Description", Content = "Runs automated farming routines configured for maximum efficiency."})
-    ChilliTab:CreateButton({
-       Name = "Execute Chilli Hub",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/StealAnEgg"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Chilli Hub!", Duration = 3})
-       end,
-    })
-
-    local SabTab = Window:CreateTab("SabScript", 4483362458)
-    SabTab:CreateSection("SabScript Arch")
-    SabTab:CreateParagraph({Title = "Description", Content = "Deploys automation tools and shortcut frameworks."})
-    SabTab:CreateButton({
-       Name = "Execute SabScript Arch",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/sabscrip-arch/srver/refs/heads/main/Stealanegg"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed SabScript Arch!", Duration = 3})
-       end,
-    })
-
-    local MirandaTab = Window:CreateTab("Miranda", 4483362458)
-    MirandaTab:CreateSection("Miranda Loader")
-    MirandaTab:CreateParagraph({Title = "Description", Content = "Loads a modular script loader granting gameplay assistance."})
-    MirandaTab:CreateButton({
-       Name = "Execute Miranda Loader",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealaeggs"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Miranda Loader!", Duration = 3})
-       end,
-    })
-
-    local LKZTab = Window:CreateTab("LKZ Hub", 4483362458)
-    LKZTab:CreateSection("LKZ Hub & Info")
-    LKZTab:CreateParagraph({Title = "Description", Content = "Injects comprehensive utility scripts and control menus."})
-    LKZTab:CreateButton({
-       Name = "Execute LKZ Hub",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/LucasggkX/LKZ-Hub/refs/heads/main/Loader.lua"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed LKZ Hub!", Duration = 3})
-       end,
-    })
-
-    local SolixTab = Window:CreateTab("Solix Hub", 4483362458)
-    SolixTab:CreateSection("Solix Hub & Info")
-    SolixTab:CreateParagraph({Title = "Description", Content = "A robust multi-game utility hub with customization options."})
-    SolixTab:CreateButton({
-       Name = "Execute Solix Hub",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/bao8jl/solixhub/main/loader"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Solix Hub!", Duration = 3})
-       end,
-    })
-
-    local DecodeTab = Window:CreateTab("De:Code", 4483362458)
-    DecodeTab:CreateSection("De:Code Script")
-    DecodeTab:CreateParagraph({Title = "Description", Content = "Executes the De:Code script suite for player management."})
-    DecodeTab:CreateButton({
-       Name = "Execute De:Code",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/ItzYumi/Decode/refs/heads/main/DE%3ACODE.lua", true))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed De:Code!", Duration = 3})
-       end,
-    })
-
-    local FnTab = Window:CreateTab("Fn Steal An Egg", 4483362458)
-    FnTab:CreateSection("Fn Script & Info")
-    FnTab:CreateParagraph({Title = "Description", Content = "Runs specialized routines focused on egg collection."})
-    FnTab:CreateButton({
-       Name = "Execute Fn Steal An Egg",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/Fn-stealanegg.lua"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Fn Steal An Egg!", Duration = 3})
-       end,
-    })
-
-    local CloverTab = Window:CreateTab("Clover Hub", 4483362458)
-    CloverTab:CreateSection("Clover Script")
-    CloverTab:CreateParagraph({Title = "Description", Content = "Loads Clover Hub loader for extra auxiliary scripts."})
-    CloverTab:CreateButton({
-       Name = "Execute Clover Hub",
-       Callback = function()
-          pcall(function() loadstring(game:HttpGet("https://cloverhub.app/clover.lua"))() end)
-          Rayfield:Notify({Title = "Success", Content = "Executed Clover Hub!", Duration = 3})
-       end,
-    })
+if not Success or not Fluent then
+    warn("Failed to load Fluent UI.")
+    return
 end
 
--- ================= EXECUTION FLOW =================
-if CheckSavedKey() then
-    -- Kung na-save na ang saktong key daan, diretso na mo-load sa Rayfield UI!
-    LoadMainHub()
-else
-    -- Kung wala pa, mo-pop up ang Key System UI
-    local KeyGui = Instance.new("ScreenGui")
-    KeyGui.Name = "JohnbertCustomKeySystem"
-    KeyGui.Parent = ProtectedGui
-    KeyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    KeyGui.ResetOnSpawn = false
+local Window = Fluent:CreateWindow({
+    Title = "Johnbert Hub | Steal An Egg",
+    SubTitle = "by Johnbert",
+    TabWidth = 110,
+    Size = UDim2.fromOffset(450, 280), -- Tama-tama ra ang size sa cellphone
+    Acrylic = false,
+    Theme = "Dark",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
 
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Size = UDim2.new(0, 0, 0, 0)
-    MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    MainFrame.BorderSizePixel = 0
-    MainFrame.ClipsDescendants = true
-    MainFrame.Parent = KeyGui
+-- Toggle UI Visibility when clicking the floating icon
+ToggleButton.MouseButton1Click:Connect(function()
+    Window:Minimize()
+end)
 
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 10)
-    UICorner.Parent = MainFrame
+local Tabs = {
+    Creator = Window:AddTab({ Title = "Creator", Icon = "user" }),
+    Lennon = Window:AddTab({ Title = "Lennon", Icon = "terminal" }),
+    Void = Window:AddTab({ Title = "VoidShell", Icon = "box" }),
+    Ww = Window:AddTab({ Title = "Ww", Icon = "code" }),
+    Shaders = Window:AddTab({ Title = "Shaders", Icon = "eye" }),
+    Pastefy = Window:AddTab({ Title = "Pastefy", Icon = "file-text" }),
+    Chilli = Window:AddTab({ Title = "Chilli", Icon = "zap" }),
+    Sab = Window:AddTab({ Title = "SabScript", Icon = "cpu" }),
+    Miranda = Window:AddTab({ Title = "Miranda", Icon = "layers" }),
+    LKZ = Window:AddTab({ Title = "LKZ", Icon = "globe" }),
+    Solix = Window:AddTab({ Title = "Solix", Icon = "shield" }),
+    Decode = Window:AddTab({ Title = "De:Code", Icon = "command" }),
+    Fn = Window:AddTab({ Title = "Fn Egg", Icon = "target" }),
+    Clover = Window:AddTab({ Title = "Clover", Icon = "star" })
+}
 
-    local UIStroke = Instance.new("UIStroke")
-    UIStroke.Thickness = 2.5
-    UIStroke.Parent = MainFrame
+-- ================= CREATOR TAB =================
+Tabs.Creator:AddParagraph({
+    Title = "Developer Information",
+    Content = "Owner: Johnbert\nStatus: Verified Developer (No Key Required)"
+})
 
-    task.spawn(function()
-        while KeyGui and KeyGui.Parent do
-            for i = 0, 1, 0.005 do
-                if not UIStroke or not UIStroke.Parent then break end
-                UIStroke.Color = Color3.fromHSV(i, 1, 1)
-                task.wait(0.02)
-            end
+local CountdownParagraph = Tabs.Creator:AddParagraph({
+    Title = "Next Script Update Countdown",
+    Content = "Loading timer..."
+})
+
+task.spawn(function()
+    while true do
+        local now = os.time()
+        local targetHour = 22
+        local targetMin = 0
+        local dateTable = os.date("*t", now)
+        
+        local targetTable = {
+            year = dateTable.year,
+            month = dateTable.month,
+            day = dateTable.day,
+            hour = targetHour,
+            min = targetMin,
+            sec = 0
+        }
+        local targetTime = os.time(targetTable)
+        
+        if now > targetTime then
+            targetTable.day = targetTable.day + 1
+            targetTime = os.time(targetTable)
         end
-    end)
-
-    local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.BackgroundTransparency = 1
-    Title.Text = "JohnBert Hub Keysystem"
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.TextSize = 17
-    Title.Font = Enum.Font.GothamBold
-    Title.Parent = MainFrame
-
-    local Subtitle = Instance.new("TextLabel")
-    Subtitle.Size = UDim2.new(1, 0, 0, 20)
-    Subtitle.Position = UDim2.new(0, 0, 0, 35)
-    Subtitle.BackgroundTransparency = 1
-    Subtitle.Text = "Permanent Key (Never Expires)"
-    Subtitle.TextColor3 = Color3.fromRGB(0, 255, 128)
-    Subtitle.TextSize = 12
-    Subtitle.Font = Enum.Font.Gotham
-    Subtitle.Parent = MainFrame
-
-    local TextBox = Instance.new("TextBox")
-    TextBox.Size = UDim2.new(0, 357, 0, 38)
-    TextBox.Position = UDim2.new(0.5, -178, 0, 65)
-    TextBox.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
-    TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    TextBox.PlaceholderText = "Type your Key here..."
-    TextBox.Text = ""
-    TextBox.TextSize = 13
-    TextBox.Font = Enum.Font.Gotham
-    TextBox.Parent = MainFrame
-
-    local BoxCorner = Instance.new("UICorner")
-    BoxCorner.CornerRadius = UDim.new(0, 6)
-    BoxCorner.Parent = TextBox
-
-    local SubmitBtn = Instance.new("TextButton")
-    SubmitBtn.Size = UDim2.new(0, 173, 0, 35)
-    SubmitBtn.Position = UDim2.new(0.05, 0, 0, 115)
-    SubmitBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
-    SubmitBtn.Text = "SUBMIT"
-    SubmitBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SubmitBtn.TextSize = 13
-    SubmitBtn.Font = Enum.Font.GothamBold
-    SubmitBtn.Parent = MainFrame
-
-    local BtnCorner1 = Instance.new("UICorner")
-    BtnCorner1.CornerRadius = UDim.new(0, 6)
-    BtnCorner1.Parent = SubmitBtn
-
-    local CopyBtn = Instance.new("TextButton")
-    CopyBtn.Size = UDim2.new(0, 173, 0, 35)
-    CopyBtn.Position = UDim2.new(0.52, 0, 0, 115)
-    CopyBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    CopyBtn.Text = "COPY DISCORD"
-    CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    CopyBtn.TextSize = 13
-    CopyBtn.Font = Enum.Font.GothamBold
-    CopyBtn.Parent = MainFrame
-
-    local BtnCorner2 = Instance.new("UICorner")
-    BtnCorner2.CornerRadius = UDim.new(0, 6)
-    BtnCorner2.Parent = CopyBtn
-
-    local CountdownLabel = Instance.new("TextLabel")
-    CountdownLabel.Size = UDim2.new(0, 357, 0, 35)
-    CountdownLabel.Position = UDim2.new(0.5, -178, 0, 162)
-    CountdownLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    CountdownLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
-    CountdownLabel.TextSize = 11
-    CountdownLabel.Font = Enum.Font.GothamBold
-    CountdownLabel.Text = "The Script Update In Alas 10:00: Loading..."
-    CountdownLabel.Parent = MainFrame
-
-    local CountCorner = Instance.new("UICorner")
-    CountCorner.CornerRadius = UDim.new(0, 6)
-    CountCorner.Parent = CountdownLabel
-
-    task.spawn(function()
-        while KeyGui and KeyGui.Parent do
-            local now = os.time()
-            local targetHour = 22
-            local targetMin = 0
-            local dateTable = os.date("*t", now)
-            
-            local targetTable = {
-                year = dateTable.year,
-                month = dateTable.month,
-                day = dateTable.day,
-                hour = targetHour,
-                min = targetMin,
-                sec = 0
-            }
-            local targetTime = os.time(targetTable)
-            
-            if now > targetTime then
-                targetTable.day = targetTable.day + 1
-                targetTime = os.time(targetTable)
-            end
-            
-            local diff = targetTime - now
-            
-            if diff > 0 then
-                local hours = math.floor(diff / 3600)
-                local minutes = math.floor((diff % 3600) / 60)
-                local seconds = diff % 60
-                CountdownLabel.Text = string.format("Update In Alas 10:00: %02dh %02dm %02ds", hours, minutes, seconds)
-            else
-                CountdownLabel.Text = "The Script Update In Alas 10:00: Time reached!"
-            end
-            task.wait(1)
-        end
-    end)
-
-    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 417, 0, 215),
-        Position = UDim2.new(0.5, -208, 0.5, -107)
-    }):Play()
-
-    CopyBtn.MouseButton1Click:Connect(function()
-        pcall(function() if setclipboard then setclipboard("https://discord.gg/8CZGc9mXj") end end)
-    end)
-
-    SubmitBtn.MouseButton1Click:Connect(function()
-        local inputtedKey = TrimString(TextBox.Text)
-        if inputtedKey == GetSecretKey() then
-            SaveKeyData() -- I-save permanently ang key
-            
-            local closeTween = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
-                Size = UDim2.new(0, 0, 0, 0),
-                Position = UDim2.new(0.5, 0, 0.5, 0)
-            })
-            closeTween:Play()
-            closeTween.Completed:Wait()
-            
-            KeyGui:Destroy()
-            LoadMainHub()
+        
+        local diff = targetTime - now
+        
+        if diff > 0 then
+            local hours = math.floor(diff / 3600)
+            local minutes = math.floor((diff % 3600) / 60)
+            local seconds = diff % 60
+            CountdownParagraph:SetDesc(string.format("Update In Alas 10:00: %02dh %02dm %02ds remaining", hours, minutes, seconds))
         else
-            TextBox.Text = ""
-            TextBox.PlaceholderText = "Incorrect Key! Try again."
+            CountdownParagraph:SetDesc("Update time reached (Alas 10:00)!")
         end
-    end)
-end
+        task.wait(1)
+    end
+end)
+
+Tabs.Creator:AddButton({
+    Title = "Copy Discord Link",
+    Description = "Copies community invite link to clipboard.",
+    Callback = function()
+        pcall(function() if setclipboard then setclipboard("https://discord.gg/8CZGc9mXj") end end)
+        Fluent:Notify({ Title = "Discord", Content = "Discord link copied!", Duration = 3 })
+    end
+})
+
+-- ================= SCRIPT TABS =================
+Tabs.Lennon:AddButton({
+    Title = "Execute Lennon Hub V3",
+    Description = "Runs Lennon Hub V3 tailored for Steal An Egg.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonhubv3/refs/heads/main/stealanegg.lua"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Lennon Hub V3!", Duration = 3 })
+    end
+})
+
+Tabs.Void:AddButton({
+    Title = "Execute VoidShell Hub",
+    Description = "Loads VoidShell Hub for resource collection.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/VoidShell-null/VoidShell-Hub/refs/heads/main/Scripts/StealAnEgg.luau"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed VoidShell Hub!", Duration = 3 })
+    end
+})
+
+Tabs.Ww:AddButton({
+    Title = "Execute Ww Script",
+    Description = "Runs obfuscated utility script.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/virtuososvisualedits-prog/Ww/refs/heads/main/final-obfuscated.lua"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Ww Script!", Duration = 3 })
+    end
+})
+
+Tabs.Shaders:AddButton({
+    Title = "Execute Simple Shader",
+    Description = "Applies custom visual filters and lighting.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/robloxscripts2026/simple-shader/refs/heads/main/lua"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Simple Shader!", Duration = 3 })
+    end
+})
+
+Tabs.Pastefy:AddButton({
+    Title = "Execute Pastefy Script",
+    Description = "Fetches and runs external raw scripts.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://pastefy.app/YoZocJ8O/raw"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Pastefy Script!", Duration = 3 })
+    end
+})
+
+Tabs.Chilli:AddButton({
+    Title = "Execute Chilli Hub",
+    Description = "Runs automated farming routines.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/StealAnEgg"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Chilli Hub!", Duration = 3 })
+    end
+})
+
+Tabs.Sab:AddButton({
+    Title = "Execute SabScript Arch",
+    Description = "Deploys automation tools.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/sabscrip-arch/srver/refs/heads/main/Stealanegg"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed SabScript Arch!", Duration = 3 })
+    end
+})
+
+Tabs.Miranda:AddButton({
+    Title = "Execute Miranda Loader",
+    Description = "Loads modular script loader.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealaeggs"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Miranda Loader!", Duration = 3 })
+    end
+})
+
+Tabs.LKZ:AddButton({
+    Title = "Execute LKZ Hub",
+    Description = "Injects utility scripts and control menus.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/LucasggkX/LKZ-Hub/refs/heads/main/Loader.lua"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed LKZ Hub!", Duration = 3 })
+    end
+})
+
+Tabs.Solix:AddButton({
+    Title = "Execute Solix Hub",
+    Description = "Multi-game utility hub.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/bao8jl/solixhub/main/loader"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Solix Hub!", Duration = 3 })
+    end
+})
+
+Tabs.Decode:AddButton({
+    Title = "Execute De:Code",
+    Description = "Executes De:Code script suite.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/ItzYumi/Decode/refs/heads/main/DE%3ACODE.lua", true))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed De:Code!", Duration = 3 })
+    end
+})
+
+Tabs.Fn:AddButton({
+    Title = "Execute Fn Steal An Egg",
+    Description = "Runs specialized routines for eggs.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/Fn-stealanegg.lua"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Fn Steal An Egg!", Duration = 3 })
+    end
+})
+
+Tabs.Clover:AddButton({
+    Title = "Execute Clover Hub",
+    Description = "Loads Clover Hub loader.",
+    Callback = function()
+        pcall(function() loadstring(game:HttpGet("https://cloverhub.app/clover.lua"))() end)
+        Fluent:Notify({ Title = "Success", Content = "Executed Clover Hub!", Duration = 3 })
+    end
+})
+
+Fluent:Notify({
+    Title = "Johnbert Hub",
+    Content = "Bounded Draggable Icon Active!",
+    Duration = 4
+})
