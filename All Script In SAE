@@ -8,7 +8,7 @@ end)
 if success then
     loadstring(result)()
 else
-    -- ================= RAYFIELD UI + DUAL MUSIC + TEXTBOX LINK =================
+    -- ================= RAYFIELD UI + DUAL MUSIC + AUTO COPY CLIPBOARD =================
     
     -- Play First Audio (ID: 113377354243758) during Key System only (No Loop)
     pcall(function()
@@ -25,6 +25,13 @@ else
     local SECRET_KEY = "GWAPOSICOLE"
     local DiscordKeyLink = "https://discord.gg/8CZGc9mXj"
     local WebhookURL = "https://discord.com/api/webhooks/1552664878903205939/nIhoJl-yZrKzYol8kBwMzhKCt-fYlcfLr6AehmafF8_HRVPKvrUCZ-6B3SykbUD05TAv"
+
+    -- Automatic copy sa Discord link sa clipboard pag-bukas sa Key System
+    pcall(function()
+        if setclipboard then
+            setclipboard(DiscordKeyLink)
+        end
+    end)
 
     local function SendWebhook(title, messageText)
         pcall(function()
@@ -72,11 +79,11 @@ else
         KeySettings = {
             Title = "JohnBert Hub - Key System 🔑",
             Subtitle = "Enter the Key to access the Hub",
-            Note = "Copy the Discord link in the box: " .. DiscordKeyLink,
+            Note = "Discord link is automatically copied! Link: " .. DiscordKeyLink,
             FileName = "JohnBertKeySystemPass",
             SaveKey = false,
             GrabKeyFromSite = false,
-            Key = {SECRET_KEY, DiscordKeyLink} -- Giapil diri ang link aron makita sa box/textbox
+            Key = {SECRET_KEY} -- Usa ra ka husto nga key: GWAPOSICOLE
         }
     })
 
@@ -230,7 +237,7 @@ else
         end
     })
 
-    -- SolixLink & Solix Hub
+    -- Solix Hub
     SolixTab:CreateSection("Solix Hub Features")
     SolixTab:CreateParagraph({Title = "Features Included", Content = "- Universal Hub Loader\n- High Performance\n- Secure Bypass"})
     SolixTab:CreateButton({
