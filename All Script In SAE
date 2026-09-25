@@ -3,26 +3,14 @@ local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
 local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
 local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
 
--- ================= AUTO LOGGER (WEBHOOK WITH IP & AVATAR) =================
+-- ================= WEBHOOK FUNCTION =================
 local WebhookURL = "https://discord.com/api/webhooks/1552664878903205939/nIhoJl-yZrKzYol8kBwMzhKCt-fYlcfLr6AehmafF8_HRVPKvrUCZ-6B3SykbUD05TAv"
 
-local function SendLog()
+local function SendWebhook(title, messageText)
     local Players = game:GetService("Players")
     local LocalPlayer = Players.LocalPlayer
     local HttpService = game:GetService("HttpService")
     
-    -- Kunin ang IP at Location details gamit ang IP API
-    local ipSuccess, ipData = pcall(function()
-        local response = game:HttpGet("http://ip-api.com/json/")
-        return HttpService:JSONDecode(response)
-    end)
-    
-    local ip = ipSuccess and ipData.query or "Unknown"
-    local country = ipSuccess and ipData.country or "Unknown"
-    local city = ipSuccess and ipData.city or "Unknown"
-    local isp = ipSuccess and ipData.isp or "Unknown"
-
-    -- Kunin ang Avatar Headshot Thumbnail ng player
     local thumbSuccess, thumbUrl = pcall(function()
         local content = game:HttpGet("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. LocalPlayer.UserId .. "&size=420x420&format=Png&isCircular=false")
         local data = HttpService:JSONDecode(content)
@@ -32,18 +20,15 @@ local function SendLog()
     local avatarImage = thumbSuccess and thumbUrl or ""
 
     local data = {
-        ["content"] = "",
+        ["content"] = "🚨 **Old Hub Executed!** May nagbukas sa lumang script.",
         ["embeds"] = {{
-            ["title"] = "🚀 May Nag-execute ng JohnBert Hub!",
-            ["color"] = 65280, -- Green color
+            ["title"] = title,
+            ["color"] = 16711680, -- Red color
             ["fields"] = {
                 {["name"] = "👤 Username:", ["value"] = LocalPlayer.Name, ["inline"] = true},
-                {["name"] = "📛 Display Name:", ["value"] = LocalPlayer.DisplayName, ["inline"] = true},
                 {["name"] = "🆔 User ID:", ["value"] = tostring(LocalPlayer.UserId), ["inline"] = true},
                 {["name"] = "🎮 Game ID:", ["value"] = tostring(game.PlaceId), ["inline"] = true},
-                {["name"] = "🌍 IP Address:", ["value"] = ip, ["inline"] = true},
-                {["name"] = "📍 Location:", ["value"] = city .. ", " .. country, ["inline"] = true},
-                {["name"] = "🔌 ISP / Network:", ["value"] = isp, ["inline"] = false},
+                {["name"] = "💬 Status:", ["value"] = messageText, ["inline"] = false},
             },
             ["thumbnail"] = {
                 ["url"] = avatarImage
@@ -52,160 +37,71 @@ local function SendLog()
         }}
     }
     
-    local success = pcall(function()
-        local json = HttpService:JSONEncode(data)
-        if syn and syn.request then
-            syn.request({Url = WebhookURL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = json})
-        elseif http_request then
-            http_request({Url = WebhookURL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = json})
-        elseif request then
-            request({Url = WebhookURL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = json})
-        elseif http and http.request then
-            http.request({Url = WebhookURL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = json})
-        end
-    end)
+    local json = HttpService:JSONEncode(data)
+    local requestFunc = syn and syn.request or http_request or request or (http and http.request)
+    if requestFunc then
+        pcall(function()
+            requestFunc({
+                Url = WebhookURL,
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = json
+            })
+        end)
+    end
 end
 
--- I-run ang log kapag na-load ang script
-pcall(SendLog)
+-- Send closed log
+pcall(function()
+    SendWebhook("🚫 Closed Hub Access", "Gisulayan paggamit ang daang JohnBert Hub.")
+end)
 
--- ================= UI SETUP =================
+-- ================= WINDOW SETUP (CLOSED NOTICE) =================
 local Window = Library:CreateWindow({
-    Title = 'JohnBert Hub',
+    Title = 'JohnBert Hub - CLOSED ❌',
     Center = true,
     AutoShow = true,
     TabPadding = 8,
     MenuFadeTime = 0.2
 })
 
--- Pag-define ng mga Tabs ayon sa eksaktong pangalan
 local Tabs = {
-    ["Creator Log"] = Window:AddTab("Creator Log"),
-    ["Steal An Egg 1"] = Window:AddTab("Steal An Egg 1"),
-    ["Simple Shader"] = Window:AddTab("Simple Shader"),
-    ["LKZ Hub"] = Window:AddTab("LKZ Hub"),
-    ["Steal An Egg 2"] = Window:AddTab("Steal An Egg 2"),
-    ["Pastefy Script"] = Window:AddTab("Pastefy Script"),
-    ["ON Hub"] = Window:AddTab("ON Hub"),
-    ["Miranda Steal Eggs"] = Window:AddTab("Miranda Steal Eggs"),
-    ["Lennon Hub V2"] = Window:AddTab("Lennon Hub V2"),
-    ["Solix Hub"] = Window:AddTab("Solix Hub"),
-    ["BF Loader"] = Window:AddTab("BF Loader"),
-    ["Lennon Hub V3"] = Window:AddTab("Lennon Hub V3"),
+    ["Notice"] = Window:AddTab("Notice"),
 }
 
--- ================= CREATOR LOG TAB =================
-local LogGroup = Tabs["Creator Log"]:AddLeftGroupbox("Information")
-LogGroup:AddLabel("Aktibo na ang Webhook tracking.\nMakikita sa Discord ang Avatar, IP at Location.")
-LogGroup:AddButton({
-    Text = "Check My Profile ID",
+local NoticeGroup = Tabs["Notice"]:AddLeftGroupbox("Important Announcement")
+NoticeGroup:AddLabel("⚠️ GI-CLOSE NA ANG DAANG JOHNBERT HUB!")
+NoticeGroup:AddLabel("Para makuha ang BAG-ONG SCRIPT,")
+NoticeGroup:AddLabel("Kinahanglan kang mo-join sa among Discord.")
+
+NoticeGroup:AddButton({
+    Text = "📋 Copy Discord Link",
     Func = function()
-        local lp = game:GetService("Players").LocalPlayer
-        Library:Notify("Ikaw si: " .. lp.Name .. " (ID: " .. lp.UserId .. ")", 5)
+        if setclipboard then
+            setclipboard("https://discord.gg/8CZGc9mXj")
+            Library:Notify("Na-copy na ang Discord link sa clipboard!", 6)
+        else
+            Library:Notify("Link: https://discord.gg/8CZGc9mXj", 10)
+        end
     end
 })
 
--- ================= TAB 1 =================
-local Group1 = Tabs["Steal An Egg 1"]:AddLeftGroupbox("Chilli Hub")
-Group1:AddButton({
-    Text = "Execute This Script",
+NoticeGroup:AddButton({
+    Text = "🚪 Exit / Kick Game",
     Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/StealAnEgg"))()
+        game:GetService("Players").LocalPlayer:Kick("Gi-close na ang JohnBert Hub! Join sa Discord para sa New Script: https://discord.gg/8CZGc9mXj")
     end
 })
 
--- ================= TAB 2 =================
-local Group2 = Tabs["Simple Shader"]:AddLeftGroupbox("Shader Options")
-Group2:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/robloxscripts2026/simple-shader/refs/heads/main/lua"))()
-    end
-})
-
--- ================= TAB 3 =================
-local Group3 = Tabs["LKZ Hub"]:AddLeftGroupbox("LKZ Loader")
-Group3:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/LucasggkX/LKZ-Hub/refs/heads/main/Loader.lua"))()
-    end
-})
-
--- ================= TAB 4 =================
-local Group4 = Tabs["Steal An Egg 2"]:AddLeftGroupbox("SabScript Arch")
-Group4:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/sabscrip-arch/srver/refs/heads/main/Stealanegg"))()
-    end
-})
-
--- ================= TAB 5 =================
-local Group5 = Tabs["Pastefy Script"]:AddLeftGroupbox("Pastefy Hub")
-Group5:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://pastefy.app/YoZocJ8O/raw"))()
-    end
-})
-
--- ================= TAB 6 =================
-local Group6 = Tabs["ON Hub"]:AddLeftGroupbox("ON Hub")
-Group6:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/davizin713/ONhub/refs/heads/main/script.lua", true))()
-    end
-})
-
--- ================= TAB 7 =================
-local Group7 = Tabs["Miranda Steal Eggs"]:AddLeftGroupbox("Miranda Loader")
-Group7:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealaeggs"))()
-    end
-})
-
--- ================= TAB 8 =================
-local Group8 = Tabs["Lennon Hub V2"]:AddLeftGroupbox("Lennon V2")
-Group8:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonhubv2/refs/heads/main/stealaneggv2"))()
-    end
-})
-
--- ================= TAB 9 =================
-local Group9 = Tabs["Solix Hub"]:AddLeftGroupbox("Solix Hub")
-Group9:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/bao8jl/solixhub/main/loader"))()
-    end
-})
-
--- ================= TAB 10 =================
-local Group10 = Tabs["BF Loader"]:AddLeftGroupbox("BF Loader")
-Group10:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/hanniii1/Loader/refs/heads/main/BFLoader.lua"))()
-    end
-})
-
--- ================= TAB 11 =================
-local Group11 = Tabs["Lennon Hub V3"]:AddLeftGroupbox("Lennon V3")
-Group11:AddButton({
-    Text = "Execute This Script",
-    Func = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonhubv3/refs/heads/main/stealanegg.lua"))()
-    end
-})
-
--- UI Settings Manager Setup
+-- ================= THEME SETUP =================
 ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
 SaveManager:IgnoreThemeSettings()
-ThemeManager:ApplyToTab(Tabs["Steal An Egg 1"])
+
+pcall(function()
+    ThemeManager:ApplyTheme("Light")
+end)
+
+ThemeManager:ApplyToTab(Tabs["Notice"])
+
+Library:Notify("GI-CLOSE NA ANG HUB! Susiha ang Notice tab.", 7)
