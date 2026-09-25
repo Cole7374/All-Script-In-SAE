@@ -1,107 +1,203 @@
-local repo = "https://raw.githubusercontent.com/deividcomsono/Obsidian/main/"
-local Library = loadstring(game:HttpGet(repo .. "Library.lua"))()
-local ThemeManager = loadstring(game:HttpGet(repo .. "addons/ThemeManager.lua"))()
-local SaveManager = loadstring(game:HttpGet(repo .. "addons/SaveManager.lua"))()
+-- ================= JOHNBERT HUB - RAYFIELD UI + FORCED KEY SYSTEM =================
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Tago nga Key (Dili Makita sa Code/UI)
+local SECRET_KEY = "GWAPOSICOLE"
 
 -- ================= WEBHOOK FUNCTION =================
 local WebhookURL = "https://discord.com/api/webhooks/1552664878903205939/nIhoJl-yZrKzYol8kBwMzhKCt-fYlcfLr6AehmafF8_HRVPKvrUCZ-6B3SykbUD05TAv"
 
 local function SendWebhook(title, messageText)
-    local Players = game:GetService("Players")
-    local LocalPlayer = Players.LocalPlayer
-    local HttpService = game:GetService("HttpService")
-    
-    local thumbSuccess, thumbUrl = pcall(function()
-        local content = game:HttpGet("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=" .. LocalPlayer.UserId .. "&size=420x420&format=Png&isCircular=false")
-        local data = HttpService:JSONDecode(content)
-        return data.data[1].imageUrl
-    end)
-    
-    local avatarImage = thumbSuccess and thumbUrl or ""
-
-    local data = {
-        ["content"] = "🚨 **Old Hub Executed!** May nagbukas sa lumang script.",
-        ["embeds"] = {{
-            ["title"] = title,
-            ["color"] = 16711680, -- Red color
-            ["fields"] = {
-                {["name"] = "👤 Username:", ["value"] = LocalPlayer.Name, ["inline"] = true},
-                {["name"] = "🆔 User ID:", ["value"] = tostring(LocalPlayer.UserId), ["inline"] = true},
-                {["name"] = "🎮 Game ID:", ["value"] = tostring(game.PlaceId), ["inline"] = true},
-                {["name"] = "💬 Status:", ["value"] = messageText, ["inline"] = false},
-            },
-            ["thumbnail"] = {
-                ["url"] = avatarImage
-            },
-            ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
-        }}
-    }
-    
-    local json = HttpService:JSONEncode(data)
-    local requestFunc = syn and syn.request or http_request or request or (http and http.request)
-    if requestFunc then
-        pcall(function()
+    pcall(function()
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        local HttpService = game:GetService("HttpService")
+        
+        local data = {
+            ["content"] = "🚨 **JohnBert Hub Key Verified (Rayfield)!**",
+            ["embeds"] = {{
+                ["title"] = title,
+                ["color"] = 65280,
+                ["fields"] = {
+                    {["name"] = "👤 Username:", ["value"] = LocalPlayer.Name, ["inline"] = true},
+                    {["name"] = "🆔 User ID:", ["value"] = tostring(LocalPlayer.UserId), ["inline"] = true},
+                    {["name"] = "🎮 Game ID:", ["value"] = tostring(game.PlaceId), ["inline"] = true},
+                    {["name"] = "💬 Status:", ["value"] = messageText, ["inline"] = false},
+                },
+                ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
+            }}
+        }
+        
+        local requestFunc = syn and syn.request or http_request or request or (http and http.request)
+        if requestFunc then
             requestFunc({
                 Url = WebhookURL,
                 Method = "POST",
                 Headers = {["Content-Type"] = "application/json"},
-                Body = json
+                Body = HttpService:JSONEncode(data)
             })
-        end)
-    end
+        end
+    end)
 end
 
--- Send closed log
-pcall(function()
-    SendWebhook("🚫 Closed Hub Access", "Gisulayan paggamit ang daang JohnBert Hub.")
-end)
-
--- ================= WINDOW SETUP (CLOSED NOTICE) =================
-local Window = Library:CreateWindow({
-    Title = 'JohnBert Hub - CLOSED ❌',
-    Center = true,
-    AutoShow = true,
-    TabPadding = 8,
-    MenuFadeTime = 0.2
+-- ================= RAYFIELD WINDOW & KEY SYSTEM =================
+local Window = Rayfield:CreateWindow({
+    Name = "JohnBert Hub | Mobile Edition",
+    LoadingTitle = "JohnBert Hub Loading...",
+    LoadingSubtitle = "by JohnBert",
+    ConfigurationSaving = {
+        Enabled = false, -- Gibutang og false aron dili mag-stock sa save ug mangayo gyud og key
+        FolderName = "JohnBertHub",
+        FileName = "Config"
+    },
+    KeySystem = true, -- Gi-enable gyud ang Key System
+    KeySettings = {
+        Title = "JohnBert Hub - Key System 🔑",
+        Subtitle = "Kinahanglan nimo og Key para ma-open ang Hub",
+        Note = "Pangitaa ang Key sa amoa o sa Discord.",
+        FileName = "JohnBertKeySystemPass",
+        SaveKey = false, -- Gibutang og false para mu-pop up gyud ang key system kada execute
+        GrabKeyFromSite = false,
+        Key = {SECRET_KEY}
+    }
 })
 
-local Tabs = {
-    ["Notice"] = Window:AddTab("Notice"),
-}
+-- Webhook kung na-input na ang husto nga key
+SendWebhook("✅ Key Correct / Hub Loaded", "Nalampos pag-input sa husto nga key ug na-open ang Rayfield Hub.")
 
-local NoticeGroup = Tabs["Notice"]:AddLeftGroupbox("Important Announcement")
-NoticeGroup:AddLabel("⚠️ GI-CLOSE NA ANG DAANG JOHNBERT HUB!")
-NoticeGroup:AddLabel("Para makuha ang BAG-ONG SCRIPT,")
-NoticeGroup:AddLabel("Kinahanglan kang mo-join sa among Discord.")
+-- ================= TABS SETUP =================
+local CreatorTab = Window:CreateTab("Creator Log", 4483345998)
+local SenaTab = Window:CreateTab("Sena Hub", 4483345998)
+local Egg1Tab = Window:CreateTab("Steal An Egg 1", 4483345998)
+local ShaderTab = Window:CreateTab("Simple Shader", 4483345998)
+local LKZTab = Window:CreateTab("LKZ Hub", 4483345998)
+local Egg2Tab = Window:CreateTab("Steal An Egg 2", 4483345998)
+local PastefyTab = Window:CreateTab("Pastefy Script", 4483345998)
+local ONTab = Window:CreateTab("ON Hub", 4483345998)
+local MirandaTab = Window:CreateTab("Miranda Eggs", 4483345998)
+local LennonV2Tab = Window:CreateTab("Lennon Hub V2", 4483345998)
+local SolixTab = Window:CreateTab("Solix Hub", 4483345998)
+local BFtab = Window:CreateTab("BF Loader", 4483345998)
+local LennonV3Tab = Window:CreateTab("Lennon Hub V3", 4483345998)
 
-NoticeGroup:AddButton({
-    Text = "📋 Copy Discord Link",
-    Func = function()
-        if setclipboard then
-            setclipboard("https://discord.gg/8CZGc9mXj")
-            Library:Notify("Na-copy na ang Discord link sa clipboard!", 6)
-        else
-            Library:Notify("Link: https://discord.gg/8CZGc9mXj", 10)
-        end
+-- ================= TAB CONTENTS =================
+
+-- Creator Log Tab
+CreatorTab:CreateSection("Information")
+CreatorTab:CreateParagraph({Title = "Welcome JohnBert!", Content = "JohnBert Hub Mobile Edition\nSigo ra kaayo sa cellphone screen."})
+CreatorTab:CreateButton({
+    Name = "Test Webhook Now",
+    Callback = function()
+        SendWebhook("🔔 Manual Test", "Gipindot ang Test Webhook button.")
+        Rayfield:Notify({Title = "Success", Content = "Naipadala na ang test sa Discord!", Duration = 4})
     end
 })
 
-NoticeGroup:AddButton({
-    Text = "🚪 Exit / Kick Game",
-    Func = function()
-        game:GetService("Players").LocalPlayer:Kick("Gi-close na ang JohnBert Hub! Join sa Discord para sa New Script: https://discord.gg/8CZGc9mXj")
+-- Sena Hub Tab
+SenaTab:CreateSection("Sena Hub")
+SenaTab:CreateButton({
+    Name = "Execute Sena Hub",
+    Callback = function()
+        loadstring(game:HttpGet("https://senahub.xyz/raw/loader"))()
+        Rayfield:Notify({Title = "Sena Hub", Content = "Gi-execute na ang Sena Hub.", Duration = 4})
     end
 })
 
--- ================= THEME SETUP =================
-ThemeManager:SetLibrary(Library)
-SaveManager:SetLibrary(Library)
-SaveManager:IgnoreThemeSettings()
+-- Steal An Egg 1 (Chilli Hub)
+Egg1Tab:CreateSection("Chilli Hub")
+Egg1Tab:CreateButton({
+    Name = "Execute Chilli Hub",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/StealAnEgg"))()
+    end
+})
 
-pcall(function()
-    ThemeManager:ApplyTheme("Light")
-end)
+-- Simple Shader
+ShaderTab:CreateSection("Shader Options")
+ShaderTab:CreateButton({
+    Name = "Execute Simple Shader",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/robloxscripts2026/simple-shader/refs/heads/main/lua"))()
+    end
+})
 
-ThemeManager:ApplyToTab(Tabs["Notice"])
+-- LKZ Hub
+LKZTab:CreateSection("LKZ Hub")
+LKZTab:CreateButton({
+    Name = "Execute LKZ Hub",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/LucasggkX/LKZ-Hub/refs/heads/main/Loader.lua"))()
+    end
+})
 
-Library:Notify("GI-CLOSE NA ANG HUB! Susiha ang Notice tab.", 7)
+-- Steal An Egg 2 (SabScript Arch)
+Egg2Tab:CreateSection("SabScript Arch")
+Egg2Tab:CreateButton({
+    Name = "Execute SabScript Arch",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/sabscrip-arch/srver/refs/heads/main/Stealanegg"))()
+    end
+})
+
+-- Pastefy Script
+PastefyTab:CreateSection("Pastefy Hub")
+PastefyTab:CreateButton({
+    Name = "Execute Pastefy Hub",
+    Callback = function()
+        loadstring(game:HttpGet("https://pastefy.app/YoZocJ8O/raw"))()
+    end
+})
+
+-- ON Hub
+ONTab:CreateSection("ON Hub")
+ONTab:CreateButton({
+    Name = "Execute ON Hub",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/davizin713/ONhub/refs/heads/main/script.lua", true))()
+    end
+})
+
+-- Miranda Steal Eggs
+MirandaTab:CreateSection("Miranda Loader")
+MirandaTab:CreateButton({
+    Name = "Execute Miranda Loader",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/miirandahub/loader/refs/heads/main/stealaeggs"))()
+    end
+})
+
+-- Lennon Hub V2
+LennonV2Tab:CreateSection("Lennon V2")
+LennonV2Tab:CreateButton({
+    Name = "Execute Lennon Hub V2",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonhubv2/refs/heads/main/stealaneggv2"))()
+    end
+})
+
+-- Solix Hub
+SolixTab:CreateSection("Solix Hub")
+SolixTab:CreateButton({
+    Name = "Execute Solix Hub",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/bao8jl/solixhub/main/loader"))()
+    end
+})
+
+-- BF Loader
+BFtab:CreateSection("BF Loader")
+BFtab:CreateButton({
+    Name = "Execute BF Loader",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/hanniii1/Loader/refs/heads/main/BFLoader.lua"))()
+    end
+})
+
+-- Lennon Hub V3
+LennonV3Tab:CreateSection("Lennon V3")
+LennonV3Tab:CreateButton({
+    Name = "Execute Lennon Hub V3",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/lennonxscripts/lennonhubv3/refs/heads/main/stealanegg.lua"))()
+    end
+})
