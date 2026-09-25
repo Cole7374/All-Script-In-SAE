@@ -1,19 +1,16 @@
--- ================= JOHNBERT HUB - PROPER KEY SYSTEM & EXPIRY =================
+-- ================= JOHNBERT HUB - PERMANENT SAVED KEY SYSTEM =================
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local CoreGui = game:GetService("CoreGui")
 
--- Safely get the proper protected UI parent for Delta
 local ProtectedGui = (gethui and gethui()) or CoreGui
 
--- Remove any old duplicates to prevent clutter
 if ProtectedGui:FindFirstChild("JohnbertCustomKeySystem") then 
     ProtectedGui.JohnbertCustomKeySystem:Destroy() 
 end
 
--- Play Key System Audio safely
 pcall(function()
     local KeySound = Instance.new("Sound")
     KeySound.Name = "JohnBertKeySystemSound"
@@ -23,76 +20,31 @@ pcall(function()
     KeySound:Play()
 end)
 
--- Webhook Setup
-local WebhookURL = "https://discord.com/api/webhooks/1552664878903205939/nIhoJl-yZrKzYol8kBwMzhKCt-fYlcfLr6AehmafF8_HRVPKvrUCZ-6B3SykbUD05TAv"
-local function SendWebhook(title, desc)
-    pcall(function()
-        local data = {
-            ["content"] = "📊 **JOHNBERT HUB LOG**",
-            ["embeds"] = {{
-                ["title"] = title,
-                ["description"] = desc,
-                ["color"] = 65280,
-                ["fields"] = {
-                    {["name"] = "👤 Username:", ["value"] = LocalPlayer.Name, ["inline"] = true},
-                    {["name"] = "🆔 User ID:", ["value"] = tostring(LocalPlayer.UserId), ["inline"] = true},
-                },
-                ["timestamp"] = os.date("!%Y-%m-%dT%H:%M:%SZ")
-            }}
-        }
-        local requestFunc = syn and syn.request or http_request or request or (http and http.request)
-        if requestFunc then
-            requestFunc({Url = WebhookURL, Method = "POST", Headers = {["Content-Type"] = "application/json"}, Body = HttpService:JSONEncode(data)})
-        end
-    end)
+-- Sekreto ang Key diri (Hidden/Encoded)
+local EncryptedKeyBytes = {71, 87, 65, 80, 79, 83, 73, 67, 79, 76, 69}
+local function GetSecretKey()
+    local chars = {}
+    for _, byte in ipairs(EncryptedKeyBytes) do
+        table.insert(chars, string.char(byte))
+    end
+    return table.concat(chars)
 end
 
-local FileName = "JohnbertHub_KeyData_v11.json"
-local CorrectKey = "GWAPOSICOLE"
+local FileName = "JohnbertHub_PermanentKey_v2.json"
 
--- Helper function to trim extra whitespaces
 local function TrimString(str)
     if not str then return "" end
     return (str:gsub("^%s*(.-)%s*$", "%1"))
 end
 
--- Helper function to calculate timestamp up to today's or next day's 10:00 PM (22:00)
-local function GetExpiryTimestamp()
-    local currentTime = os.time()
-    local dateTable = os.date("*t", currentTime)
-    
-    -- Target 10:00 PM (22:00:00) today
-    local targetTable = {
-        year = dateTable.year,
-        month = dateTable.month,
-        day = dateTable.day,
-        hour = 22,
-        min = 0,
-        sec = 0
-    }
-    local targetTime = os.time(targetTable)
-    
-    -- If it's already past 10:00 PM today, set expiry to 10:00 PM tomorrow
-    if currentTime >= targetTime then
-        targetTable.day = targetTable.day + 1
-        targetTime = os.time(targetTable)
-    end
-    
-    return targetTime
-end
-
--- Check Saved Key safely
+-- Susihon kung naay saved key (Permanent, walay expiration)
 local function CheckSavedKey()
     local successCheck, result = pcall(function()
         if not (readfile and writefile and isfile) then return false end
         if isfile(FileName) then
             local decoded = HttpService:JSONDecode(readfile(FileName))
-            if decoded and TrimString(decoded.Key) == CorrectKey then
-                local currentTime = os.time()
-                -- Check if current time has not passed the 10:00 PM expiration timestamp
-                if currentTime < decoded.ExpiryTime then
-                    return true
-                end
+            if decoded and TrimString(decoded.Key) == GetSecretKey() then
+                return true 
             end
         end
         return false
@@ -100,20 +52,20 @@ local function CheckSavedKey()
     return successCheck and result
 end
 
+-- I-save ang key permanently
 local function SaveKeyData()
     pcall(function()
         if writefile then
-            local expiryTimestamp = GetExpiryTimestamp()
             local data = {
-                Key = CorrectKey,
-                ExpiryTime = expiryTimestamp
+                Key = GetSecretKey(),
+                Status = "Permanent"
             }
             writefile(FileName, HttpService:JSONEncode(data))
         end
     end)
 end
 
--- Forward declaration of the Main Hub loader
+-- Forward declaration sa Main Rayfield UI Loader
 local LoadMainHub = nil
 
 LoadMainHub = function()
@@ -147,11 +99,10 @@ LoadMainHub = function()
        KeySystem = false
     })
 
-    -- ================= 1. CREATOR LOG TAB (Lahi na ang icon ID) =================
     local CreatorTab = Window:CreateTab("Creator Log", 6023426915)
     CreatorTab:CreateSection("Developer Information")
     CreatorTab:CreateParagraph({Title = "Owner", Content = "Johnbert"})
-    CreatorTab:CreateParagraph({Title = "Status", Content = "Verified Developer & Hub Creator"})
+    CreatorTab:CreateParagraph({Title = "Status", Content = "Verified Developer & Hub Creator (Permanent Key Active)"})
     CreatorTab:CreateParagraph({Title = "Tab Description", Content = "Displays developer details, community links, and real-time countdown timers for the next scheduled script updates."})
 
     local CountdownParagraph = CreatorTab:CreateParagraph({Title = "Next Script Update Countdown", Content = "Loading timer..."})
@@ -160,33 +111,33 @@ LoadMainHub = function()
         while true do
             local now = os.time()
             local targetHour = 22
-            local targetMin = 50
+            local targetMin = 0
             local dateTable = os.date("*t", now)
-            
-            local daysUntilSaturday = (7 - dateTable.wday + 7) % 7
-            if daysUntilSaturday == 0 and (dateTable.hour > targetHour or (dateTable.hour == targetHour and dateTable.min >= targetMin)) then
-                daysUntilSaturday = 7
-            end
             
             local targetTable = {
                 year = dateTable.year,
                 month = dateTable.month,
-                day = dateTable.day + daysUntilSaturday,
+                day = dateTable.day,
                 hour = targetHour,
                 min = targetMin,
                 sec = 0
             }
             local targetTime = os.time(targetTable)
+            
+            if now > targetTime then
+                targetTable.day = targetTable.day + 1
+                targetTime = os.time(targetTable)
+            end
+            
             local diff = targetTime - now
             
             if diff > 0 then
-                local days = math.floor(diff / 86400)
-                local hours = math.floor((diff % 86400) / 3600)
+                local hours = math.floor(diff / 3600)
                 local minutes = math.floor((diff % 3600) / 60)
                 local seconds = diff % 60
-                CountdownParagraph:Set({Title = "Next Script Update Countdown (Saturday 10:50 PM)", Content = string.format("%d days, %02d hours, %02d minutes, %02d seconds remaining", days, hours, minutes, seconds)})
+                CountdownParagraph:Set({Title = "Next Script Update Countdown (Alas 10:00)", Content = string.format("%02d hours, %02d minutes, %02d seconds remaining", hours, minutes, seconds)})
             else
-                CountdownParagraph:Set({Title = "Next Script Update Countdown", Content = "Update time reached (10:50 PM)!"})
+                CountdownParagraph:Set({Title = "Next Script Update Countdown", Content = "Update time reached (Alas 10:00)!"})
             end
             task.wait(1)
         end
@@ -200,10 +151,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 2. LENNON HUB TAB =================
     local LennonTab = Window:CreateTab("Lennon Hub", 4483362458)
     LennonTab:CreateSection("Lennon V3 Script & Info")
-    LennonTab:CreateParagraph({Title = "Description", Content = "Executes Lennon Hub V3 tailored for Steal An Egg. Features advanced farming routines and automated tools."})
+    LennonTab:CreateParagraph({Title = "Description", Content = "Executes Lennon Hub V3 tailored for Steal An Egg."})
     LennonTab:CreateButton({
        Name = "Execute Lennon Hub V3",
        Callback = function()
@@ -212,10 +162,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 3. VOIDSHELL TAB =================
     local VoidTab = Window:CreateTab("VoidShell", 4483362458)
     VoidTab:CreateSection("VoidShell Script & Info")
-    VoidTab:CreateParagraph({Title = "Description", Content = "Loads the VoidShell Hub script package to boost overall in-game resource collection and performance."})
+    VoidTab:CreateParagraph({Title = "Description", Content = "Loads VoidShell Hub for resource collection and performance."})
     VoidTab:CreateButton({
        Name = "Execute VoidShell Hub",
        Callback = function()
@@ -224,10 +173,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 4. WW SCRIPT TAB =================
     local WwTab = Window:CreateTab("Ww Script", 4483362458)
     WwTab:CreateSection("WW Script & Info")
-    WwTab:CreateParagraph({Title = "Description", Content = "Executes an obfuscated utility script designed to enhance player capabilities and automated actions."})
+    WwTab:CreateParagraph({Title = "Description", Content = "Executes an obfuscated utility script for automated actions."})
     WwTab:CreateButton({
        Name = "Execute Ww Script",
        Callback = function()
@@ -236,10 +184,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 5. SHADERS TAB =================
     local ShaderTab = Window:CreateTab("Shaders", 4483362458)
-    ShaderTab:CreateSection("Graphic Enhancements & Info")
-    ShaderTab:CreateParagraph({Title = "Description", Content = "Applies custom visual filters and lighting improvements to upgrade graphic fidelity and visual quality."})
+    ShaderTab:CreateSection("Graphic Enhancements")
+    ShaderTab:CreateParagraph({Title = "Description", Content = "Applies custom visual filters and lighting improvements."})
     ShaderTab:CreateButton({
        Name = "Execute Simple Shader",
        Callback = function()
@@ -248,10 +195,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 6. PASTEFY TAB =================
     local PastefyTab = Window:CreateTab("Pastefy", 4483362458)
-    PastefyTab:CreateSection("External Script & Info")
-    PastefyTab:CreateParagraph({Title = "Description", Content = "Fetches and runs external raw scripts hosted securely on Pastefy for supplementary in-game features."})
+    PastefyTab:CreateSection("External Script")
+    PastefyTab:CreateParagraph({Title = "Description", Content = "Fetches and runs external raw scripts from Pastefy."})
     PastefyTab:CreateButton({
        Name = "Execute Pastefy Script",
        Callback = function()
@@ -260,10 +206,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 7. CHILLI HUB TAB =================
     local ChilliTab = Window:CreateTab("Chilli Hub", 4483362458)
     ChilliTab:CreateSection("Chilli Hub & Info")
-    ChilliTab:CreateParagraph({Title = "Description", Content = "Runs automated farming routines and helpful utility commands specifically configured for maximum efficiency."})
+    ChilliTab:CreateParagraph({Title = "Description", Content = "Runs automated farming routines configured for maximum efficiency."})
     ChilliTab:CreateButton({
        Name = "Execute Chilli Hub",
        Callback = function()
@@ -272,10 +217,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 8. SABSCRIPT TAB =================
     local SabTab = Window:CreateTab("SabScript", 4483362458)
-    SabTab:CreateSection("SabScript Arch & Info")
-    SabTab:CreateParagraph({Title = "Description", Content = "Deploys automation tools and shortcut frameworks designed to streamline gameplay progression."})
+    SabTab:CreateSection("SabScript Arch")
+    SabTab:CreateParagraph({Title = "Description", Content = "Deploys automation tools and shortcut frameworks."})
     SabTab:CreateButton({
        Name = "Execute SabScript Arch",
        Callback = function()
@@ -284,10 +228,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 9. MIRANDA TAB =================
     local MirandaTab = Window:CreateTab("Miranda", 4483362458)
-    MirandaTab:CreateSection("Miranda Loader & Info")
-    MirandaTab:CreateParagraph({Title = "Description", Content = "Loads a powerful modular script loader that grants access to various gameplay assistance features."})
+    MirandaTab:CreateSection("Miranda Loader")
+    MirandaTab:CreateParagraph({Title = "Description", Content = "Loads a modular script loader granting gameplay assistance."})
     MirandaTab:CreateButton({
        Name = "Execute Miranda Loader",
        Callback = function()
@@ -296,10 +239,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 10. LKZ HUB TAB =================
     local LKZTab = Window:CreateTab("LKZ Hub", 4483362458)
     LKZTab:CreateSection("LKZ Hub & Info")
-    LKZTab:CreateParagraph({Title = "Description", Content = "Enhances the overall gameplay experience by injecting comprehensive utility scripts and control menus."})
+    LKZTab:CreateParagraph({Title = "Description", Content = "Injects comprehensive utility scripts and control menus."})
     LKZTab:CreateButton({
        Name = "Execute LKZ Hub",
        Callback = function()
@@ -308,10 +250,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 11. SOLIX HUB TAB =================
     local SolixTab = Window:CreateTab("Solix Hub", 4483362458)
     SolixTab:CreateSection("Solix Hub & Info")
-    SolixTab:CreateParagraph({Title = "Description", Content = "A robust multi-game utility hub loaded with powerful customization and automation options."})
+    SolixTab:CreateParagraph({Title = "Description", Content = "A robust multi-game utility hub with customization options."})
     SolixTab:CreateButton({
        Name = "Execute Solix Hub",
        Callback = function()
@@ -320,10 +261,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 12. DE:CODE TAB =================
     local DecodeTab = Window:CreateTab("De:Code", 4483362458)
-    DecodeTab:CreateSection("De:Code Script & Info")
-    DecodeTab:CreateParagraph({Title = "Description", Content = "Executes the De:Code script suite to unlock smooth automation and advanced player management."})
+    DecodeTab:CreateSection("De:Code Script")
+    DecodeTab:CreateParagraph({Title = "Description", Content = "Executes the De:Code script suite for player management."})
     DecodeTab:CreateButton({
        Name = "Execute De:Code",
        Callback = function()
@@ -332,10 +272,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 13. FN STEAL AN EGG TAB =================
     local FnTab = Window:CreateTab("Fn Steal An Egg", 4483362458)
     FnTab:CreateSection("Fn Script & Info")
-    FnTab:CreateParagraph({Title = "Description", Content = "Runs specialized routines focused on egg collection efficiency and fast item progression."})
+    FnTab:CreateParagraph({Title = "Description", Content = "Runs specialized routines focused on egg collection."})
     FnTab:CreateButton({
        Name = "Execute Fn Steal An Egg",
        Callback = function()
@@ -344,10 +283,9 @@ LoadMainHub = function()
        end,
     })
 
-    -- ================= 14. CLOVER HUB TAB =================
     local CloverTab = Window:CreateTab("Clover Hub", 4483362458)
-    CloverTab:CreateSection("Clover Script & Info")
-    CloverTab:CreateParagraph({Title = "Description", Content = "Loads the Clover Hub loader to provide extra auxiliary scripts and quality-of-life adjustments."})
+    CloverTab:CreateSection("Clover Script")
+    CloverTab:CreateParagraph({Title = "Description", Content = "Loads Clover Hub loader for extra auxiliary scripts."})
     CloverTab:CreateButton({
        Name = "Execute Clover Hub",
        Callback = function()
@@ -357,12 +295,12 @@ LoadMainHub = function()
     })
 end
 
--- ================= EXECUTION FLOW CHECK =================
+-- ================= EXECUTION FLOW =================
 if CheckSavedKey() then
-    -- If valid key exists in local workspace file, skip key system and load Main UI directly!
+    -- Kung na-save na ang saktong key daan, diretso na mo-load sa Rayfield UI!
     LoadMainHub()
 else
-    -- Otherwise, show the Key System GUI for first-time or expired key users
+    -- Kung wala pa, mo-pop up ang Key System UI
     local KeyGui = Instance.new("ScreenGui")
     KeyGui.Name = "JohnbertCustomKeySystem"
     KeyGui.Parent = ProtectedGui
@@ -408,8 +346,8 @@ else
     Subtitle.Size = UDim2.new(1, 0, 0, 20)
     Subtitle.Position = UDim2.new(0, 0, 0, 35)
     Subtitle.BackgroundTransparency = 1
-    Subtitle.Text = "Key expires at 10:00 PM"
-    Subtitle.TextColor3 = Color3.fromRGB(255, 80, 80)
+    Subtitle.Text = "Permanent Key (Never Expires)"
+    Subtitle.TextColor3 = Color3.fromRGB(0, 255, 128)
     Subtitle.TextSize = 12
     Subtitle.Font = Enum.Font.Gotham
     Subtitle.Parent = MainFrame
@@ -454,4 +392,85 @@ else
     CopyBtn.Parent = MainFrame
 
     local BtnCorner2 = Instance.new("UICorner")
-    BtnCorn
+    BtnCorner2.CornerRadius = UDim.new(0, 6)
+    BtnCorner2.Parent = CopyBtn
+
+    local CountdownLabel = Instance.new("TextLabel")
+    CountdownLabel.Size = UDim2.new(0, 357, 0, 35)
+    CountdownLabel.Position = UDim2.new(0.5, -178, 0, 162)
+    CountdownLabel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    CountdownLabel.TextColor3 = Color3.fromRGB(0, 255, 128)
+    CountdownLabel.TextSize = 11
+    CountdownLabel.Font = Enum.Font.GothamBold
+    CountdownLabel.Text = "The Script Update In Alas 10:00: Loading..."
+    CountdownLabel.Parent = MainFrame
+
+    local CountCorner = Instance.new("UICorner")
+    CountCorner.CornerRadius = UDim.new(0, 6)
+    CountCorner.Parent = CountdownLabel
+
+    task.spawn(function()
+        while KeyGui and KeyGui.Parent do
+            local now = os.time()
+            local targetHour = 22
+            local targetMin = 0
+            local dateTable = os.date("*t", now)
+            
+            local targetTable = {
+                year = dateTable.year,
+                month = dateTable.month,
+                day = dateTable.day,
+                hour = targetHour,
+                min = targetMin,
+                sec = 0
+            }
+            local targetTime = os.time(targetTable)
+            
+            if now > targetTime then
+                targetTable.day = targetTable.day + 1
+                targetTime = os.time(targetTable)
+            end
+            
+            local diff = targetTime - now
+            
+            if diff > 0 then
+                local hours = math.floor(diff / 3600)
+                local minutes = math.floor((diff % 3600) / 60)
+                local seconds = diff % 60
+                CountdownLabel.Text = string.format("Update In Alas 10:00: %02dh %02dm %02ds", hours, minutes, seconds)
+            else
+                CountdownLabel.Text = "The Script Update In Alas 10:00: Time reached!"
+            end
+            task.wait(1)
+        end
+    end)
+
+    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 417, 0, 215),
+        Position = UDim2.new(0.5, -208, 0.5, -107)
+    }):Play()
+
+    CopyBtn.MouseButton1Click:Connect(function()
+        pcall(function() if setclipboard then setclipboard("https://discord.gg/8CZGc9mXj") end end)
+    end)
+
+    SubmitBtn.MouseButton1Click:Connect(function()
+        local inputtedKey = TrimString(TextBox.Text)
+        if inputtedKey == GetSecretKey() then
+            SaveKeyData() -- I-save permanently ang key
+            
+            local closeTween = TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.In), {
+                Size = UDim2.new(0, 0, 0, 0),
+                Position = UDim2.new(0.5, 0, 0.5, 0)
+            })
+            closeTween:Play()
+            closeTween.Completed:Wait()
+            
+            KeyGui:Destroy()
+            LoadMainHub()
+        else
+            TextBox.Text = ""
+            TextBox.PlaceholderText = "Incorrect Key! Try again."
+        end
+    end)
+end
