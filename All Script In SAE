@@ -1,5 +1,5 @@
 -- Owner: 09donperds11 (JOHNBERT)
--- Hub: RENE BATERBONIA HUB - Steal An Egg (100% Working Fix)
+-- Hub: RENE BATERBONIA HUB - Steal An Egg (Optimized)
 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
@@ -11,7 +11,6 @@ local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 local Camera = workspace.CurrentCamera
 
--- Limpyohi ang lumang Guis ug Tunog
 pcall(function()
     for _, v in ipairs(PlayerGui:GetChildren()) do
         if v.Name == "ReneBaterboniaMain" or v.Name == "ReneBaterboniaToggle" or v.Name == "ReneMusic" then
@@ -20,17 +19,14 @@ pcall(function()
     end
 end)
 
--- Background Music
 pcall(function()
     local BgMusic = Instance.new("Sound", PlayerGui)
     BgMusic.Name = "ReneMusic"
     BgMusic.SoundId = "rbxassetid://113377354243758"
     BgMusic.Volume = 0.5
-    BgMusic.Looped = false
     BgMusic:Play()
 end)
 
--- Click Sound
 local function PlayClickSound()
     pcall(function()
         local ClickSound = Instance.new("Sound", PlayerGui)
@@ -41,7 +37,6 @@ local function PlayClickSound()
     end)
 end
 
--- Screen Guis
 local ScreenGui = Instance.new("ScreenGui", PlayerGui)
 ScreenGui.Name = "ReneBaterboniaMain"
 ScreenGui.IgnoreGuiInset = true
@@ -54,15 +49,9 @@ ToggleGui.IgnoreGuiInset = true
 ToggleGui.ResetOnSpawn = false
 ToggleGui.DisplayOrder = 101
 
--- States
-local isTransparent = true
-local isAcrylic = false
-local autoSaveEnabled = false
-
--- Main Frame
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
-MainFrame.BackgroundTransparency = 1
+MainFrame.BackgroundTransparency = 0.25
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
 MainFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
 MainFrame.Size = UDim2.new(0, 440, 0, 260)
@@ -71,12 +60,9 @@ MainFrame.ZIndex = 10
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
 local MainStroke = Instance.new("UIStroke", MainFrame)
 MainStroke.Color = Color3.fromRGB(70, 130, 220)
-MainStroke.Transparency = 1
+MainStroke.Transparency = 0.25
 MainStroke.Thickness = 2
 
-local uiElementsToUpdate = {}
-
--- Dragging Main
 local draggingMain, dragStartMain, startPosMain
 MainFrame.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -97,10 +83,9 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
--- Toggle Button
 local ToggleButton = Instance.new("ImageButton", ToggleGui)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
-ToggleButton.BackgroundTransparency = 1
+ToggleButton.BackgroundTransparency = 0.25
 ToggleButton.AnchorPoint = Vector2.new(0, 0.5)
 ToggleButton.Position = UDim2.new(0, 10, 0.5, 0)
 ToggleButton.Size = UDim2.new(0, 42, 0, 42)
@@ -111,10 +96,9 @@ ToggleButton.ZIndex = 20
 Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(0, 8)
 local ToggleStroke = Instance.new("UIStroke", ToggleButton)
 ToggleStroke.Color = Color3.fromRGB(70, 130, 220)
-ToggleStroke.Transparency = 1
+ToggleStroke.Transparency = 0.25
 ToggleStroke.Thickness = 2
 
--- Dragging Toggle
 local draggingToggle, dragStartToggle, startPosToggle
 ToggleButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -135,58 +119,20 @@ UserInputService.InputEnded:Connect(function(input)
     end
 end)
 
-local function UpdateStyles()
-    local targetMainTrans = isTransparent and 0.25 or 0.0
-    local targetSubTrans = isTransparent and 0.4 or 0.0
-    local targetBtnTrans = isTransparent and 0.2 or 0.0
-    
-    if isAcrylic then
-        MainFrame.BackgroundColor3 = Color3.fromRGB(10, 15, 25)
-        targetMainTrans = math.clamp(targetMainTrans + 0.15, 0, 0.8)
-    else
-        MainFrame.BackgroundColor3 = Color3.fromRGB(20, 30, 50)
-    end
-
-    MainFrame.BackgroundTransparency = targetMainTrans
-    MainStroke.Transparency = isTransparent and 0.2 or 0.0
-    
-    for _, item in ipairs(uiElementsToUpdate) do
-        if item.Type == "Sidebar" or item.Type == "SearchBox" then
-            item.Obj.BackgroundTransparency = targetSubTrans
-        elseif item.Type == "TabBtn" then
-            item.Obj.BackgroundTransparency = targetSubTrans - 0.1
-        elseif item.Type == "Paragraph" then
-            item.Obj.BackgroundTransparency = targetSubTrans - 0.1
-        elseif item.Type == "Button" then
-            item.Obj.BackgroundTransparency = targetBtnTrans
-        elseif item.Type == "Image" then
-            item.Obj.BackgroundTransparency = targetSubTrans
-        end
-    end
-end
-
 local function FadeInMain()
     MainFrame.Visible = true
-    local targetMainTrans = isTransparent and 0.25 or 0.0
-    if isAcrylic then targetMainTrans = math.clamp(targetMainTrans + 0.15, 0, 0.8) end
+    MainFrame.BackgroundTransparency = 1
+    MainStroke.Transparency = 1
     local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    TweenService:Create(MainFrame, tweenInfo, {BackgroundTransparency = targetMainTrans}):Play()
-    TweenService:Create(MainStroke, tweenInfo, {Transparency = isTransparent and 0.2 or 0.0}):Play()
-    for _, desc in ipairs(MainFrame:GetDescendants()) do
-        if desc:IsA("TextLabel") or desc:IsA("TextBox") or desc:IsA("TextButton") then
-            TweenService:Create(desc, tweenInfo, {TextTransparency = 0}):Play()
-        elseif desc:IsA("ImageLabel") then
-            TweenService:Create(desc, tweenInfo, {ImageTransparency = 0}):Play()
-        end
-    end
+    TweenService:Create(MainFrame, tweenInfo, {BackgroundTransparency = 0.25}):Play()
+    TweenService:Create(MainStroke, tweenInfo, {Transparency = 0.25}):Play()
 end
 
 local function FadeInToggle()
     ToggleButton.Visible = true
-    local targetToggleTrans = isTransparent and 0.25 or 0.0
     local tweenInfo = TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-    TweenService:Create(ToggleButton, tweenInfo, {BackgroundTransparency = targetToggleTrans, ImageTransparency = 0}):Play()
-    TweenService:Create(ToggleStroke, tweenInfo, {Transparency = isTransparent and 0.2 or 0.0}):Play()
+    TweenService:Create(ToggleButton, tweenInfo, {BackgroundTransparency = 0.25, ImageTransparency = 0}):Play()
+    TweenService:Create(ToggleStroke, tweenInfo, {Transparency = 0.25}):Play()
 end
 
 ToggleButton.MouseButton1Click:Connect(function()
@@ -199,7 +145,6 @@ ToggleButton.MouseButton1Click:Connect(function()
     ToggleButton.Visible = false
 end)
 
--- Top Bar
 local TopBar = Instance.new("Frame", MainFrame)
 TopBar.BackgroundTransparency = 1
 TopBar.Size = UDim2.new(1, 0, 0, 28)
@@ -218,7 +163,7 @@ TitleLabel.ZIndex = 11
 
 local CloseButton = Instance.new("TextButton", TopBar)
 CloseButton.BackgroundColor3 = Color3.fromRGB(50, 100, 180)
-CloseButton.BackgroundTransparency = 0.2
+CloseButton.BackgroundTransparency = 0.25
 CloseButton.Position = UDim2.new(1, -26, 0.5, -8)
 CloseButton.Size = UDim2.new(0, 16, 0, 16)
 CloseButton.Font = Enum.Font.GothamBold
@@ -238,14 +183,13 @@ CloseButton.MouseButton1Click:Connect(function()
     FadeInToggle()
 end)
 
--- Search Bar
 local SearchBox = Instance.new("TextBox", MainFrame)
 SearchBox.BackgroundColor3 = Color3.fromRGB(15, 22, 38)
-SearchBox.BackgroundTransparency = 0.4
+SearchBox.BackgroundTransparency = 0.35
 SearchBox.Position = UDim2.new(0, 124, 0, 32)
 SearchBox.Size = UDim2.new(0, 308, 0, 22)
 SearchBox.Font = Enum.Font.GothamBold
-SearchBox.PlaceholderText = "Search features or tabs here..."
+SearchBox.PlaceholderText = "Search features..."
 SearchBox.Text = ""
 SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 SearchBox.PlaceholderColor3 = Color3.fromRGB(140, 170, 210)
@@ -254,15 +198,12 @@ SearchBox.ZIndex = 11
 Instance.new("UICorner", SearchBox).CornerRadius = UDim.new(0, 4)
 local SearchStroke = Instance.new("UIStroke", SearchBox)
 SearchStroke.Color = Color3.fromRGB(50, 90, 150)
-SearchStroke.Transparency = 0.2
+SearchStroke.Transparency = 0.25
 SearchStroke.Thickness = 1
 
-table.insert(uiElementsToUpdate, {Obj = SearchBox, Type = "SearchBox"})
-
--- Sidebar
 local Sidebar = Instance.new("ScrollingFrame", MainFrame)
 Sidebar.BackgroundColor3 = Color3.fromRGB(15, 22, 38)
-Sidebar.BackgroundTransparency = 0.4
+Sidebar.BackgroundTransparency = 0.35
 Sidebar.Position = UDim2.new(0, 8, 0, 58)
 Sidebar.Size = UDim2.new(0, 110, 0, 192)
 Sidebar.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -273,14 +214,11 @@ Sidebar.BorderSizePixel = 0
 Sidebar.ZIndex = 11
 Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 6)
 
-table.insert(uiElementsToUpdate, {Obj = Sidebar, Type = "Sidebar"})
-
 local SidebarLayout = Instance.new("UIListLayout", Sidebar)
 SidebarLayout.SortOrder = Enum.SortOrder.LayoutOrder
 SidebarLayout.FillDirection = Enum.FillDirection.Vertical
 SidebarLayout.Padding = UDim.new(0, 4)
 
--- Content Container
 local ContentContainer = Instance.new("Frame", MainFrame)
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Position = UDim2.new(0, 124, 0, 58)
@@ -294,7 +232,7 @@ local allElements = {}
 local function CreateTab(name)
     local TabBtn = Instance.new("TextButton", Sidebar)
     TabBtn.BackgroundColor3 = Color3.fromRGB(35, 55, 90)
-    TabBtn.BackgroundTransparency = 0.3
+    TabBtn.BackgroundTransparency = 0.35
     TabBtn.Size = UDim2.new(1, 0, 0, 26)
     TabBtn.Font = Enum.Font.GothamBold
     TabBtn.Text = name
@@ -302,8 +240,6 @@ local function CreateTab(name)
     TabBtn.TextSize = 9
     TabBtn.ZIndex = 12
     Instance.new("UICorner", TabBtn).CornerRadius = UDim.new(0, 4)
-
-    table.insert(uiElementsToUpdate, {Obj = TabBtn, Type = "TabBtn"})
 
     local Page = Instance.new("ScrollingFrame", ContentContainer)
     Page.BackgroundTransparency = 1
@@ -340,12 +276,10 @@ end
 local function AddParagraph(tab, title, desc)
     local f = Instance.new("Frame", tab)
     f.BackgroundColor3 = Color3.fromRGB(30, 45, 70)
-    f.BackgroundTransparency = 0.3
+    f.BackgroundTransparency = 0.35
     f.Size = UDim2.new(1, 0, 0, 36)
     f.ZIndex = 13
     Instance.new("UICorner", f).CornerRadius = UDim.new(0, 5)
-
-    table.insert(uiElementsToUpdate, {Obj = f, Type = "Paragraph"})
     
     local t = Instance.new("TextLabel", f)
     t.BackgroundTransparency = 1
@@ -376,7 +310,7 @@ end
 local function AddButton(tab, name, callback)
     local btn = Instance.new("TextButton", tab)
     btn.BackgroundColor3 = Color3.fromRGB(45, 90, 160)
-    btn.BackgroundTransparency = 0.2
+    btn.BackgroundTransparency = 0.25
     btn.Size = UDim2.new(1, 0, 0, 24)
     btn.Font = Enum.Font.GothamBold
     btn.Text = name
@@ -384,8 +318,6 @@ local function AddButton(tab, name, callback)
     btn.TextSize = 9
     btn.ZIndex = 13
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
-
-    table.insert(uiElementsToUpdate, {Obj = btn, Type = "Button"})
 
     btn.MouseButton1Click:Connect(function()
         PlayClickSound()
@@ -397,18 +329,8 @@ end
 
 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
     local query = string.lower(SearchBox.Text)
-    if query == "" then
-        for _, item in ipairs(allElements) do
-            item.Object.Visible = true
-        end
-    else
-        for _, item in ipairs(allElements) do
-            if string.find(item.Text, query) then
-                item.Object.Visible = true
-            else
-                item.Object.Visible = false
-            end
-        end
+    for _, item in ipairs(allElements) do
+        item.Object.Visible = (query == "" or string.find(item.Text, query) ~= nil)
     end
 end)
 
@@ -416,32 +338,30 @@ end)
 local TabCreator = CreateTab("Creator")
 local AvatarImage = Instance.new("ImageLabel", TabCreator)
 AvatarImage.BackgroundColor3 = Color3.fromRGB(30, 45, 70)
-AvatarImage.BackgroundTransparency = 0.3
+AvatarImage.BackgroundTransparency = 0.35
 AvatarImage.Size = UDim2.new(1, 0, 0, 80)
 AvatarImage.Image = "rbxthumb://type=AvatarHeadShot&id=8064284458&w=420&h=420"
 AvatarImage.ScaleType = Enum.ScaleType.Fit
 AvatarImage.ZIndex = 13
 Instance.new("UICorner", AvatarImage).CornerRadius = UDim.new(0, 5)
 
-table.insert(uiElementsToUpdate, {Obj = AvatarImage, Type = "Image"})
-
-AddParagraph(TabCreator, "Developer Info", "Official Hub Owner: 09donperds11 (JOHNBERT)")
+AddParagraph(TabCreator, "Developer Info", "Owner: 09donperds11 (JOHNBERT)")
 AddButton(TabCreator, "Copy Username", function()
     if setclipboard then setclipboard("09donperds11") end
 end)
 
 -- Accounts Tab
 local TabAccounts = CreateTab("Accounts")
-AddParagraph(TabAccounts, "Social Media Links", "Bisitaha ang akong mga official pages!")
-AddButton(TabAccounts, "Copy TikTok Page: @valenzonajohnbert", function() if setclipboard then setclipboard("tiktok.com/@valenzonajohnbert") end end)
-AddButton(TabAccounts, "Copy Facebook Page Link", function() if setclipboard then setclipboard("https://www.facebook.com/profile.php?id=61584512375546") end end)
-AddButton(TabAccounts, "Copy Instagram Page Link", function() if setclipboard then setclipboard("https://www.instagram.com/valenzonajohnbert22") end end)
+AddParagraph(TabAccounts, "Social Links", "Bisitaha ang akong mga official pages!")
+AddButton(TabAccounts, "Copy TikTok: @valenzonajohnbert", function() if setclipboard then setclipboard("tiktok.com/@valenzonajohnbert") end end)
+AddButton(TabAccounts, "Copy Facebook Link", function() if setclipboard then setclipboard("https://www.facebook.com/profile.php?id=61584512375546") end end)
+AddButton(TabAccounts, "Copy Instagram Link", function() if setclipboard then setclipboard("https://www.instagram.com/valenzonajohnbert22") end end)
 
 -- Private Server Tab
 local TabPrivateServer = CreateTab("Private Server")
-local ServerStatus = AddParagraph(TabPrivateServer, "Server Browser", "Status: Ready to join available servers...")
-AddButton(TabPrivateServer, "Join Available Server (Player > 0)", function()
-    ServerStatus.TextLabel.Text = "Searching for a valid server..."
+local ServerStatus = AddParagraph(TabPrivateServer, "Server Browser", "Status: Ready...")
+AddButton(TabPrivateServer, "Join Available Server", function()
+    ServerStatus.TextLabel.Text = "Searching server..."
     task.spawn(function()
         pcall(function()
             local cursor = ""
@@ -458,12 +378,8 @@ AddButton(TabPrivateServer, "Join Available Server (Player > 0)", function()
                             end
                         end
                         cursor = data.nextPageCursor
-                    else
-                        break
-                    end
-                else
-                    break
-                end
+                    else break end
+                else break end
             until #servers > 0 or not cursor
 
             if #servers > 0 then
@@ -477,7 +393,7 @@ end)
 
 -- Settings Tab
 local TabSettings = CreateTab("Settings")
-AddParagraph(TabSettings, "Graphics Options", "I-optimize ang dula para sa hapsay nga performance.")
+AddParagraph(TabSettings, "Graphics Options", "I-optimize ang performance.")
 AddButton(TabSettings, "Enable Potato Graphics", function()
     Camera.FieldOfView = 70
     Lighting.GlobalShadows = false
@@ -488,31 +404,17 @@ AddButton(TabSettings, "Enable Potato Graphics", function()
     end
 end)
 
-AddParagraph(TabSettings, "Visual Customization", "I-configure ang Transparency ug Acrylic effect.")
-local ToggleContainer = Instance.new("Frame", TabSettings)
-ToggleContainer.BackgroundTransparency = 1
-ToggleContainer.Size = UDim2.new(1, 0, 0, 24)
-ToggleContainer.ZIndex = 13
+-- Steal An Egg Tab
+local TabStealEgg = CreateTab("Steal An Egg")
+AddParagraph(TabStealEgg, "Hubs", "Pilia ang hub nga i-execute.")
+AddButton(TabStealEgg, "Execute LKZ Hub", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/LucasggkX/LKZ-Hub/refs/heads/main/Loader.lua"))() end)
+AddButton(TabStealEgg, "Execute ZeroIn Hub", function() loadstring(game:HttpGet("https://zeroinhub.com/api/script"))() end)
+AddButton(TabStealEgg, "Execute Sena Hub", function() loadstring(game:HttpGet("https://senahub.xyz/raw/loader"))() end)
+AddButton(TabStealEgg, "Execute VoidShell Hub", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/VoidShell-null/VoidShell-Hub/refs/heads/main/Scripts/StealAnEgg.luau"))() end)
+AddButton(TabStealEgg, "Execute Chilli Hub", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/tienkhanh1/Chilli-Hub-Script/refs/heads/main/StealAnEgg"))() end)
+AddButton(TabStealEgg, "Execute Fn Steal An Egg", function() loadstring(game:HttpGet("https://raw.githubusercontent.com/caomod2077/Script/refs/heads/main/Fn-stealanegg.lua"))() end)
 
-local TransToggleBtn = Instance.new("TextButton", ToggleContainer)
-TransToggleBtn.BackgroundColor3 = Color3.fromRGB(45, 90, 160)
-TransToggleBtn.BackgroundTransparency = 0.2
-TransToggleBtn.Size = UDim2.new(0.48, 0, 1, 0)
-TransToggleBtn.Font = Enum.Font.GothamBold
-TransToggleBtn.Text = "Transparency: ON"
-TransToggleBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-TransToggleBtn.TextSize = 8
-TransToggleBtn.ZIndex = 13
-Instance.new("UICorner", TransToggleBtn).CornerRadius = UDim.new(0, 5)
-
-table.insert(uiElementsToUpdate, {Obj = TransToggleBtn, Type = "Button"})
-
-TransToggleBtn.MouseButton1Click:Connect(function()
-    PlayClickSound()
-    isTransparent = not isTransparent
-    TransToggleBtn.Text = isTransparent and "Transparency: ON" or "Transparency: OFF"
-    UpdateStyles()
+task.spawn(function()
+    task.wait(3)
+    FadeInMain()
 end)
-
-local AcrylicToggleBtn = Instance.new("TextButton", ToggleContainer)
-AcrylicToggleBtn.BackgroundColor3 = Color3.fromR
